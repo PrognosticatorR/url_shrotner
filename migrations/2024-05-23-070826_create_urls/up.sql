@@ -1,0 +1,9 @@
+-- Your SQL goes here
+-- Your SQL goes here
+CREATE TABLE IF NOT EXISTS URLS (
+    id BIGSERIAL PRIMARY KEY NOT NULL,
+    origin_url VARCHAR(2048) NOT NULL,
+    short_url VARCHAR(256) UNIQUE NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
