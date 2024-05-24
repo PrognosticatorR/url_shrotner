@@ -1,0 +1,9 @@
+-- Your SQL goes here
+CREATE TABLE IF NOT EXISTS USER_URL_MAPPINGS (
+    id BIGSERIAL PRIMARY KEY,
+    user_id INT NOT NULL,
+    url_id BIGINT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    FOREIGN KEY (user_id) REFERENCES USERS (id),
+    FOREIGN KEY (url_id) REFERENCES URLS (id)
+)
