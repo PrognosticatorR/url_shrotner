@@ -6,5 +6,6 @@ CREATE TABLE IF NOT EXISTS USERS (
     email VARCHAR(128) NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     deleted BOOLEAN NOT NULL DEFAULT FALSE,
-    deleted_at TIMESTAMP
+    deleted_at TIMESTAMP,
+    token VARCHAR(256)
 )

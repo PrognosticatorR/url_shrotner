@@ -3,8 +3,7 @@ use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Queryable, Clone)]
-#[diesel(table_name=urls)]
+#[derive(Debug, Serialize, Queryable, Clone, Identifiable)]
 
 pub struct Url {
     pub id: i64,

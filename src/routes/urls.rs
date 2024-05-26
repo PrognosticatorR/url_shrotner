@@ -1,3 +1,4 @@
+use crate::auth_guard::AuthGuard;
 use crate::models::urls::{FormUrl, NewUrl, Url};
 use crate::repositories::urls::UrlsRepository;
 use crate::utilities::{self, Pool};
@@ -6,7 +7,7 @@ use log::debug;
 use serde_json::json;
 
 #[get("/urls")]
-pub async fn get_urls(pool: web::Data<Pool>) -> impl Responder {
+pub async fn get_urls(pool: web::Data<Pool>, _auth_info: AuthGuard) -> impl Responder {
     let mut conn = pool.get().expect("Failed to get DB connection from pool");
     let urls = UrlsRepository::get_all(&mut conn).await.unwrap();
     let modified_urls = urls
@@ -17,14 +18,18 @@ pub async fn get_urls(pool: web::Data<Pool>) -> impl Responder {
 }
 
 #[post("/urls")]
-pub async fn create_url(pool: web::Data<Pool>, req_body: web::Json<NewUrl>) -> impl Responder {
+pub async fn create_url(
+    pool: web::Data<Pool>,
+    req_body: web::Json<NewUrl>,
+    auth_info: AuthGuard,
+) -> impl Responder {
     let hashed_string = utilities::get_hash_for_string(&req_body.origin_url, 18);
     let new_url = NewUrl {
         short_url: hashed_string,
         origin_url: req_body.origin_url.clone(),
     };
     let mut conn = pool.get().expect("Failed to get DB connection from pool");
-    let new_url = UrlsRepository::create_url(&mut conn, new_url)
+    let new_url = UrlsRepository::create_url(&mut conn, new_url, auth_info.claims.id)
         .await
         .unwrap();
 
@@ -36,6 +41,7 @@ pub async fn update_url(
     pool: web::Data<Pool>,
     id: web::Path<i64>,
     update: web::Json<FormUrl>,
+    _auth_info: AuthGuard,
 ) -> impl Responder {
     let mut conn = pool.get().expect("Failed to get DB connection from pool");
     UrlsRepository::update_url(&mut conn, id.into_inner(), update.into_inner())
@@ -45,7 +51,11 @@ pub async fn update_url(
 }
 
 #[delete("/urls/{id}")]
-pub async fn delete_url(pool: web::Data<Pool>, id: web::Path<i64>) -> impl Responder {
+pub async fn delete_url(
+    pool: web::Data<Pool>,
+    id: web::Path<i64>,
+    _auth_info: AuthGuard,
+) -> impl Responder {
     let mut conn = pool.get().expect("Failed to get DB connection from pool");
     UrlsRepository::delete_url(&mut conn, id.into_inner())
         .await
@@ -68,7 +78,11 @@ pub async fn get_redirect_url(pool: web::Data<Pool>, url: web::Path<String>) -> 
 }
 
 #[get("/urls/{id}")]
-pub async fn get_url(pool: web::Data<Pool>, id: web::Path<i64>) -> impl Responder {
+pub async fn get_url(
+    pool: web::Data<Pool>,
+    id: web::Path<i64>,
+    _auth_info: AuthGuard,
+) -> impl Responder {
     debug!("Got a request for url id: {}", id);
     let mut conn = pool.get().expect("Failed to get DB connection from pool");
     match UrlsRepository::find_by_id(&mut conn, id.into_inner()).await {

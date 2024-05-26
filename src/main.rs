@@ -3,6 +3,7 @@ extern crate diesel;
 use dotenv::dotenv;
 use env_logger::{self, Env};
 
+mod auth_guard;
 mod models;
 mod repositories;
 mod routes;

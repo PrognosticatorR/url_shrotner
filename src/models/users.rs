@@ -3,7 +3,7 @@ use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize, Queryable)]
+#[derive(Debug, Serialize, Deserialize, Queryable, Clone, Identifiable)]
 pub struct User {
     pub id: i32,
     pub username: String,
@@ -14,6 +14,8 @@ pub struct User {
     pub deleted: bool,
     #[serde(skip_serializing)]
     pub deleted_at: Option<NaiveDateTime>,
+    #[serde(skip_serializing)]
+    pub token: Option<String>,
 }
 
 #[derive(Debug, Deserialize, AsChangeset)]
@@ -22,6 +24,7 @@ pub struct FormUser {
     pub username: Option<String>,
     pub password: Option<String>,
     pub email: Option<String>,
+    pub token: Option<String>,
 }
 
 #[derive(Debug, Serialize, Insertable, Clone, Deserialize)]

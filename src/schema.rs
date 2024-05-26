@@ -33,6 +33,8 @@ diesel::table! {
         created_at -> Timestamp,
         deleted -> Bool,
         deleted_at -> Nullable<Timestamp>,
+        #[max_length = 256]
+        token -> Nullable<Varchar>,
     }
 }
 

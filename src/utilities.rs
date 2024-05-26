@@ -1,15 +1,18 @@
 #![allow(unused)]
+use crate::{auth_guard::Claims, models::users::User};
 use ::r2d2::PooledConnection;
-use actix_web::web;
+use actix_web::{web, FromRequest, HttpResponse};
 use argon2::{
     password_hash::{rand_core::OsRng, PasswordHasher, PasswordVerifier, SaltString},
     Argon2, PasswordHash,
 };
+use chrono::{Duration, Utc};
 use diesel::{
     r2d2::{self, ConnectionManager},
     PgConnection,
 };
 use hex;
+use jsonwebtoken::{encode, Algorithm, EncodingKey, Header};
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use sha2::{Digest, Sha256};
 
@@ -53,4 +56,27 @@ pub fn verify_hashed_password(password: &str, hashed_password: &str) -> bool {
     Argon2::default()
         .verify_password(password.as_bytes(), &hash)
         .is_ok()
+}
+
+pub fn generate_jwt_token(user_data: &User) -> String {
+    let expiration = Utc::now()
+        .checked_add_signed(Duration::hours(24))
+        .expect("valid timestamp")
+        .timestamp() as usize;
+
+    let claims = Claims {
+        username: user_data.username.clone(),
+        email: user_data.email.clone(),
+        id: user_data.id,
+        exp: expiration, // Set expiration time
+    };
+
+    let secret = std::env::var("JWT_SECRET").expect("JWT_SECRET must be set");
+    let token = encode(
+        &Header::default(),
+        &claims,
+        &EncodingKey::from_secret(secret.as_ref()),
+    )
+    .unwrap();
+    format!("Bearer {}", token)
 }

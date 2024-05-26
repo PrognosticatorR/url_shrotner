@@ -3,7 +3,7 @@ use actix_web::web;
 pub mod urls;
 pub mod users;
 use urls::{create_url, delete_url, get_redirect_url, get_url, get_urls, update_url};
-use users::{delete_user, get_user_details, login, signup, update_user};
+use users::{delete_user, get_info_for_user, get_user_details, login, signup, update_user};
 
 pub fn configure(cfg: &mut web::ServiceConfig) {
     cfg.service(get_urls);
@@ -17,4 +17,5 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
     cfg.service(login);
     cfg.service(signup);
     cfg.service(update_user);
+    cfg.service(get_info_for_user);
 }

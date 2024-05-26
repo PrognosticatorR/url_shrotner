@@ -1,6 +1,6 @@
-use crate::models::urls::*;
+use crate::models::{urls::*, user_url_mappings::NewUserUrls};
 use crate::schema::*;
-use diesel::{ExpressionMethods, PgConnection, QueryDsl, QueryResult, RunQueryDsl};
+use diesel::{Connection, ExpressionMethods, PgConnection, QueryDsl, QueryResult, RunQueryDsl};
 use log::info;
 pub struct UrlsRepository;
 
@@ -30,18 +30,31 @@ impl UrlsRepository {
         info!("findind url for id: {}", id);
         urls::table.find(id).get_result::<Url>(conn)
     }
-    pub async fn create_url(conn: &mut PgConnection, new_url: NewUrl) -> QueryResult<Url> {
-        let _ = diesel::insert_into(urls::table)
-            .values(new_url)
-            .execute(conn);
-        let last_inserted_id = Self::last_insert_id(conn)?;
-        urls::table.find(last_inserted_id).first(conn)
-    }
+    pub async fn create_url(
+        conn: &mut PgConnection,
+        new_url: NewUrl,
+        user_id: i32,
+    ) -> QueryResult<Url> {
+        conn.transaction(|db_conn| {
+            let url = diesel::insert_into(urls::table)
+                .values(new_url)
+                .get_result::<Url>(db_conn);
 
-    fn last_insert_id(conn: &mut PgConnection) -> QueryResult<i64> {
-        urls::table
-            .select(urls::id)
-            .order(urls::id.desc())
-            .first(conn)
+            match url {
+                Ok(inserted_url) => {
+                    let url_mapping = NewUserUrls {
+                        user_id,
+                        url_id: inserted_url.id,
+                    };
+
+                    diesel::insert_into(user_url_mappings::table)
+                        .values(url_mapping)
+                        .execute(db_conn)?;
+
+                    Ok(inserted_url)
+                }
+                Err(e) => Err(e),
+            }
+        })
     }
 }
